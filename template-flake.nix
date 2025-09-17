@@ -60,6 +60,7 @@
                   ({ pkgs, config, ... }: {
                     custom.js.nodejs.package = pkgs.nodejs_24;
                     # custom.js.setupPlaywright = true;
+                    # custom.js.playwrightPackage = pkgs.playwright;
 
                     # custom.electron.enabled = true;
                     # custom.tf.enabled = true;

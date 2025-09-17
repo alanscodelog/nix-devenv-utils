@@ -20,6 +20,11 @@ in
       default = false;
       description = ''Whether to setup playwright. Use https://github.com/pietdevries94/playwright-web-flake to easily pin versions as they must be in sync with the version in package.json. Defaults to false.'';
     };
+    playwrightPackage = lib.mkOption {
+      type = lib.types.package;
+      default = pkgs.playwright;
+      description = ''Playwright package to use.'';
+    };
     loadNpmToken = lib.mkOption {
       type = lib.types.bool;
       default = false;
