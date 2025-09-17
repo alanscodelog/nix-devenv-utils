@@ -4,15 +4,15 @@ let
 in
 {
   options.custom.electron = {
+    enabled = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''Whether to enable the module, defaults to false.'';
+    };
     package = lib.mkOption {
       type = lib.types.package;
       default = pkgs.electron_33-bin;
       description = ''Electron package to use.'';
-    };
-    enabled = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = ''Whether to enable the module, defaults to true.'';
     };
   };
   config = lib.mkIf cfg.enabled {

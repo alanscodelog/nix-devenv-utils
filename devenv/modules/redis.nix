@@ -4,15 +4,15 @@ let
 in
 {
   options.custom.redis = {
+    enabled = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''Whether to enable the module, defaults to false.'';
+    };
     user = lib.mkOption {
       type = lib.types.str;
       default = "admin";
       description = ''The redis user (the one the server uses to connect and which will own the database. Defaults to "admin".'';
-    };
-    enabled = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = ''Whether to enable the module, defaults to true.'';
     };
   };
   config = lib.mkIf cfg.enabled {

@@ -4,15 +4,15 @@ let
 in
 {
   options.custom.tf = {
+    enabled = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''Whether to enable the module, defaults to false.'';
+    };
     package = lib.mkOption {
       type = lib.types.package;
       default = pkgs.opentofu;
       description = ''opentofu package to use.'';
-    };
-    enabled = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = ''Whether to enable the module, defaults to true.'';
     };
   };
   config = lib.mkIf cfg.enabled {

@@ -12,6 +12,11 @@ let
 in
 {
   options.custom.postgres = {
+    enabled = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''Whether to enable the module, defaults to false.'';
+    };
     runDrizzle = lib.mkOption {
       type = lib.types.bool;
       default = true;
@@ -41,11 +46,6 @@ in
       type = lib.types.bool;
       default = false;
       description = ''Whether to enable debug settings so postgress will log to stdout (collector is disabled). Defaults to false.'';
-    };
-    enabled = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = ''Whether to enable the module, defaults to true.'';
     };
   };
   config =

@@ -4,6 +4,11 @@ let
 in
 {
   options.custom.android = {
+    enabled = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''Whether to enable the module, defaults to true.'';
+    };
     keystoreAlias = lib.mkOption {
       type = lib.types.str;
       description = ''The keystore alias to use for signing. Determines what $ANDROID_KS_ALIAS and $ANDROID_KS_ALIAS_PASSWORD_PATH are set to. The module assumes you will be using a keystore per app and naming them android.[ALIAS].keystore'';
@@ -17,11 +22,6 @@ in
       type = lib.types.str;
       default = "android/app/build/outputs/apk/release/app-release-signed.apk";
       description = ''The output location of the signed apk for the devAndroidSign command. Defaults to android/app/build/outputs/apk/release/app-release-signed.apk.'';
-    };
-    enabled = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = ''Whether to enable the module, defaults to true.'';
     };
   };
   config = lib.mkIf cfg.enabled {
@@ -45,12 +45,12 @@ in
               - $ANDROID_BUILD_DIR
     '';
 
-    custom.base.beforeEnterShell = 
-    lib.optionalString (builtins.getEnv "SECRETS_DIR" != "") ''
-      export ANDROID_KS_PATH="$SECRETS_DIR/android.${cfg.keystoreAlias}.keystore"
-      export ANDROID_KS_PASSWORD_PATH="$SECRETS_DIR/android.${cfg.keystoreAlias}.keystore.password"
-      export ANDROID_KS_ALIAS_PASSWORD_PATH="$SECRETS_DIR/android.${cfg.keystoreAlias}.keystore.password"
-    '';
+    custom.base.beforeEnterShell =
+      lib.optionalString (builtins.getEnv "SECRETS_DIR" != "") ''
+        export ANDROID_KS_PATH="$SECRETS_DIR/android.${cfg.keystoreAlias}.keystore"
+        export ANDROID_KS_PASSWORD_PATH="$SECRETS_DIR/android.${cfg.keystoreAlias}.keystore.password"
+        export ANDROID_KS_ALIAS_PASSWORD_PATH="$SECRETS_DIR/android.${cfg.keystoreAlias}.keystore.password"
+      '';
     # note this and ANDROID_HOME must be changed manually in android studio :/
     env.ANDROID_SDK_ROOT = "${builtins.getEnv "ANDROID_HOME"}/share/android-sdk";
     env.ANDROID_API = "${lib.lists.last config.android.platforms.version}";

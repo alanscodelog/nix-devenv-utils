@@ -12,7 +12,6 @@ let
   };
 in
 {
-
   options.custom.base = {
     distDir = lib.mkOption {
       type = lib.types.str;
