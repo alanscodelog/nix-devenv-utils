@@ -17,8 +17,8 @@ in
     };
     setupPlaywright = lib.mkOption {
       type = lib.types.bool;
-      default = true;
-      description = ''Whether to setup playwright. Use https://github.com/pietdevries94/playwright-web-flake to easily pin versions as they must be in sync with the version in package.json.'';
+      default = false;
+      description = ''Whether to setup playwright. Use https://github.com/pietdevries94/playwright-web-flake to easily pin versions as they must be in sync with the version in package.json. Defaults to false.'';
     };
     loadNpmToken = lib.mkOption {
       type = lib.types.bool;
