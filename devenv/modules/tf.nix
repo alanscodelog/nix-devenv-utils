@@ -23,8 +23,8 @@ in
     scripts =
       let
         secretsFound = ''sops --decrypt --output-type json .secrets/secrets.tf.enc.yaml | jq -r 'to_entries | map("\t\(.key)") | join("\n")' '';
-        deploySecretsLoader = ''sops --decrypt --output-type json .secrets/secrets.tf.enc.yaml | jq -r 'to_entries | map("--var=\"\(.key)=\(.value)\"") | join(" ")' '';
-
+        deploySecretsLoader = ''sops --decrypt --output-type json .secrets/secrets.tf.enc.yaml | jq -r 'with_entries(select(.key | startswith("backend") | not)) | to_entries | map("--var=\"\(.key)=\(.value)\"") | join(" ")' '';
+        deploySecretsLoaderWithBackend = ''sops --decrypt --output-type json .secrets/secrets.tf.enc.yaml | jq -r 'del(.backend) | to_entries | map(if (.key | startswith("backend")) then "--backend-config=\"\(.key | ltrimstr("backend_"))=\(.value)\"" else "--var=\"\(.key)=\(.value)\"" end) | join(" ")' '';
       in
       {
         tofuListSecrets =
@@ -40,7 +40,13 @@ in
           exec = ''
             ${deploySecretsLoader} | xargs ${pkgs.opentofu}/bin/tofu "$@"
           '';
-          description = "Wrapper around tofu that auto loads secrets in .secrets/secrets.prod.deploy.enc.yaml as vars, nested vars are not supported";
+          description = "Wrapper around tofu that auto loads secrets in .secrets/secrets.prod.deploy.enc.yaml as vars, nested vars are not supported. Anything starting with backend is ignored, see tofuWithBackend";
+        };
+        tofuWithBackend = {
+          exec = ''
+            ${deploySecretsLoaderWithBackend} | xargs ${pkgs.opentofu}/bin/tofu "$@"
+          '';
+          description = "Wrapper around tofu that also loads any keys starting with backend_ as --backend-config=rest_of_key_name=value. This is useful for the tofu init command.";
         };
         rawTofu = {
           description = "Unwrapped tofu executable. The wrapped one can't handle commands that require input. and also has some issues with certain commands like outputs.";
