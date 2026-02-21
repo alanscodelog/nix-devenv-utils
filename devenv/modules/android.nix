@@ -74,9 +74,9 @@ in
     '';
     android = {
       enable = true;
-      buildTools.version = [ "34.0.0" ];
+      buildTools.version = [ "36.0.0" ];
       # the last elemenent is used as the main configured version for gradle
-      platforms.version = [ "33" "34" ];
+      platforms.version = [ "35" "36" ];
     };
     languages.java = {
       enable = true;
