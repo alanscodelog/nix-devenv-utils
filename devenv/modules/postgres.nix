@@ -115,7 +115,7 @@ in
             initialSQL = ''
               \getenv user_password POSTGRES_PASSWORD
 
-              CREATE USER "${cfg.user}" WITH PASSWORD :'user_password';
+              ALTER USER "${cfg.user}" WITH PASSWORD :'user_password';
 
               GRANT ALL PRIVILEGES ON DATABASE "${cfg.database_name}" TO "${cfg.user}";
               GRANT ALL PRIVILEGES ON SCHEMA public TO "${cfg.user}";
