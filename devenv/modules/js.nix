@@ -20,10 +20,10 @@ in
       default = false;
       description = ''Whether to setup playwright. Use https://github.com/pietdevries94/playwright-web-flake to easily pin versions as they must be in sync with the version in package.json. Defaults to false.'';
     };
-    playwrightPackage = lib.mkOption {
+    playwrightDriverPackage = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.playwright;
-      description = ''Playwright package to use.'';
+      default = pkgs.playwright-driver;
+      description = ''Playwright driver package to use.'';
     };
     loadNpmToken = lib.mkOption {
       type = lib.types.bool;
@@ -53,7 +53,7 @@ in
       '';
     env = lib.mkIf cfg.setupPlaywright {
       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = lib.mkIf cfg.setupPlaywright 1;
-      PLAYWRIGHT_BROWSERS_PATH = lib.mkIf cfg.setupPlaywright "${pkgs.playwright-driver.browsers}";
+      PLAYWRIGHT_BROWSERS_PATH = lib.mkIf cfg.setupPlaywright "${cfg.playwrightDriverPackage.browsers}";
       PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = lib.mkIf cfg.setupPlaywright "true";
     };
 
