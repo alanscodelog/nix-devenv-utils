@@ -22,9 +22,9 @@ in
     '';
     scripts =
       let
-        secretsFound = ''sops --decrypt --output-type json .secrets/secrets.tf.enc.yaml | jq -r 'to_entries | map("\t\(.key)") | join("\n")' '';
-        deploySecretsLoader = ''sops --decrypt --output-type json .secrets/secrets.tf.enc.yaml | jq -r 'with_entries(select(.key | startswith("backend") | not)) | to_entries | map("--var=\"\(.key)=\(.value)\"") | join(" ")' '';
-        deploySecretsLoaderWithBackend = ''sops --decrypt --output-type json .secrets/secrets.tf.enc.yaml | jq -r 'del(.backend) | to_entries | map(if (.key | startswith("backend")) then "--backend-config=\"\(.key | ltrimstr("backend_"))=\(.value)\"" else "--var=\"\(.key)=\(.value)\"" end) | join(" ")' '';
+        secretsFound = ''secretspec export --profile terraform --format json | jq -r 'keys | map("\t\(.")") | join("\n")' '';
+        deploySecretsLoader = ''secretspec export --profile terraform --format json | jq -r 'to_entries | map("--var=\"\(.key)=\(.value)\")") | join(" ")"'';
+        deploySecretsLoaderWithBackend = ''secretspec export --profile terraform --format json | jq -r 'to_entries | map(if (.key | startswith("backend_")) then "--backend-config=\"\(.key | ltrimstr("backend_"))=\(.value)\"" else "--var=\"\(.key)=\(.value)\"" end) | join(" ")"'';
       in
       {
         tofuListSecrets =
@@ -40,7 +40,7 @@ in
           exec = ''
             ${deploySecretsLoader} | xargs ${pkgs.opentofu}/bin/tofu "$@"
           '';
-          description = "Wrapper around tofu that auto loads secrets in .secrets/secrets.prod.deploy.enc.yaml as vars, nested vars are not supported. Anything starting with backend is ignored, see tofuWithBackend";
+          description = "Wrapper around tofu that auto loads secrets via secretspec as vars, nested vars are not supported. Anything starting with backend_ is ignored, see tofuWithBackend";
         };
         tofuWithBackend = {
           exec = ''

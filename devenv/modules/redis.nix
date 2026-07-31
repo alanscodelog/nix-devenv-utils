@@ -41,7 +41,7 @@ in
       {
         enable = true;
         extraConfig = ''
-          user ${cfg.user} on #${builtins.getEnv "REDIS_HASHED_PASSWORD"} +@all ~*
+          user ${cfg.user} on #${if config ? secretspec then config.secretspec.secrets.REDIS_HASHED_PASSWORD else (builtins.getEnv "REDIS_HASHED_PASSWORD")} +@all ~*
           loglevel notice
         '';
       };
