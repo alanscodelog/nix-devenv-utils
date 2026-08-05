@@ -179,6 +179,7 @@ in
           exec = "${pkgs.postgresql}/bin/pg_isready --dbname=$POSTGRES_NAME --host=$POSTGRES_HOST --port=${builtins.toString config.services.postgres.port}";
         };
         scripts.devPgUpgrade = {
+          description = "Moves old Postgres data aside for upgrade, prompting initialization of the new database. If already moved, runs a dry-run check and outputs the final pg_upgrade command. Uses btrfs --clone, so the old data is read-only and safely retained without requiring manual backups.";
           exec =
             let
               dataDir = "${config.env.DEVENV_STATE}/postgres";
@@ -198,7 +199,7 @@ in
                 echo "Checking postgres..."
                 ${pkgs.postgresql}/bin/pg_upgrade \
                   --old-bindir=${oldBinDir} \
-                  --old-datadir=${config.env.DEVENV_STATE}/upgrade/ \
+                  --old-datadir=${movedDataDir} \
                   --new-bindir=${newBinDir} \
                   --new-datadir=${dataDir} \
                   --clone \
@@ -207,18 +208,15 @@ in
                 echo "You can now safely run:"
                 echo ${pkgs.postgresql}/bin/pg_upgrade \
                   --old-bindir=${oldBinDir} \
-                  --old-datadir=${config.env.DEVENV_STATE}/upgrade/ \
+                  --old-datadir=${movedDataDir} \
                   --new-bindir=${newBinDir} \
                   --new-datadir=${dataDir} \
                   --clone
               else
                 mv "${dataDir}" "${movedDataDir}"
-                mv "${dataDir}" "${movedDataDir}"
                 echo "Moved old data to ${movedDataDir}"
-                echo "Double backed up to ${movedDataDir}-backup"
-                rm -rf ${dataDir}
-                echo "Deteled data directory ${dataDir}"
-                echo "You must now start postgres, let it init, then quit."
+                ${pkgs.postgresql}/bin/initdb -D "${dataDir}"
+                echo "Initialized new database. Run this script again to proceed with the upgrade."
               fi
             '';
         };
