@@ -26,8 +26,8 @@ in
             - $REDIS_PORT
             - $REDIS_USER 
     '';
-    env.REDIS_HOST = if (config.services.redis.bind != null) then "${builtins.toString config.services.redis.bind}" else "localhost";
-    env.REDIS_PORT = if (config.services.redis.port != null) then "${builtins.toString config.services.redis.port}" else "6379";
+    env.REDIS_HOST = if (config.services.redis.bind != null) then "${toString config.services.redis.bind}" else "localhost";
+    env.REDIS_PORT = if (config.services.redis.port != null) then "${toString config.services.redis.port}" else "6379";
     env.REDIS_USER = cfg.user;
     custom.base.info = ''
       echo REDIS MODULE:
@@ -41,7 +41,7 @@ in
       {
         enable = true;
         extraConfig = ''
-          user ${cfg.user} on #${if config ? secretspec then config.secretspec.secrets.REDIS_HASHED_PASSWORD else (builtins.getEnv "REDIS_HASHED_PASSWORD")} +@all ~*
+          user ${cfg.user} on #${if config ? secretspec && config.secretspec.secrets ? REDIS_HASHED_PASSWORD then config.secretspec.secrets.REDIS_HASHED_PASSWORD else (builtins.getEnv "REDIS_HASHED_PASSWORD")} +@all ~*
           loglevel notice
         '';
       };
