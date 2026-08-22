@@ -29,7 +29,14 @@ in
     };
     user = lib.mkOption {
       type = lib.types.str;
-      description = ''The postgres user (the one the server uses to connect. Defaults to "app". This must be different than superuser'';
+      description = ''
+        The postgres user (the one the app uses to connect). Defaults to "app". Must be different from superuser.
+
+        SECURITY NOTE: This module is not appropriate for productions as-is since
+        by default, both the app and DB processes run as the same OS user ($USER).
+        It can be forced to work for production, by running the app as a separate
+        OS user with only the app-level DB credentials.
+      '';
       default = "app";
     };
     previousVersion = lib.mkOption {
