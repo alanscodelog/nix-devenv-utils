@@ -45,12 +45,19 @@ in
               - $NPM_TOKEN * (if loadNpmToken = true)
               - $NODE_EXTRA_CA_CERTS * (if loadSelfSignedCerts = true)
     '';
-    custom.base.beforeEnterShell =
-      lib.optionalString (cfg.loadNpmToken && builtins.getEnv "SECRETS_DIR" != "") ''
-        export NPM_TOKEN=$(cat $SECRETS_DIR/NPM_TOKEN)
-      '' + lib.optionalString config.custom.base.loadSelfSignedCerts ''
-        export NODE_EXTRA_CA_CERTS="$LOCALHOST_PEM"
-      '';
+    tasks."js:loadEnv" = {
+      description = "Loads the JS module env vars into the shell.";
+      exec =
+        lib.optionalString (cfg.loadNpmToken && builtins.getEnv "SECRETS_DIR" != "") ''
+          export NPM_TOKEN=$(cat $SECRETS_DIR/NPM_TOKEN)
+        '' + lib.optionalString config.custom.base.loadSelfSignedCerts ''
+          export NODE_EXTRA_CA_CERTS="$LOCALHOST_PEM"
+        '';
+      exports = [ "NPM_TOKEN" "NODE_EXTRA_CA_CERTS" ];
+      showOutput = true;
+      after = lib.optional (config.custom.base.loadSelfSignedCerts && builtins.getEnv "SECRETS_DIR" != "") "base:loadCerts";
+      before = [ "devenv:enterShell" ];
+    };
     env = lib.mkIf cfg.setupPlaywright {
       PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD = lib.mkIf cfg.setupPlaywright 1;
       PLAYWRIGHT_BROWSERS_PATH = lib.mkIf cfg.setupPlaywright "${cfg.playwrightDriverPackage.browsers}";

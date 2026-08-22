@@ -82,9 +82,15 @@ in
         # devenv changed how this works, breaking scripts
         env.PGHOST = "${config.env.DEVENV_RUNTIME}/postgres";
         env.POSTGRES_PORT = if (config.services.postgres.port != null) then "${builtins.toString config.services.postgres.port}" else "5432";
-        custom.base.beforeEnterShell = lib.optionalString (cfg.superuser != "") ''
-          export POSTGRES_SUPERUSER=${superuser}
-        '';
+        tasks."postgres:loadEnv" = {
+          description = "Loads the postgres superuser into the shell.";
+          exec = lib.optionalString (cfg.superuser != "") ''
+            export POSTGRES_SUPERUSER=${superuser}
+          '';
+          exports = [ "POSTGRES_SUPERUSER" ];
+          showOutput = true;
+          before = [ "devenv:enterShell" ];
+        };
 
         custom.base.info = ''
           echo ${c.green} "POSTGRES_MODULE:" ${c.reset}

@@ -38,11 +38,6 @@ in
       default = '''';
       description = ''Additional shell commands to run in the devInfo script. Mostly for other modules so they can register additional information. Note that ALL scripts are printed by default, other modules don't have to specify their's.'';
     };
-    beforeEnterShell = lib.mkOption {
-      type = lib.types.lines;
-      default = "";
-      description = ''Shell commands to run at the start of enter shell. Mostly for other modules to export env vars based on impure info. CANNOT use config.env variables'';
-    };
     prepare = lib.mkOption {
       type = lib.types.lines;
       default = "";
@@ -83,21 +78,57 @@ in
     # not working?
     process.managers.process-compose.settings.availability.max_restarts = 6;
 
-    enterShell =
-      lib.optionalString (cfg.loadSelfSignedCerts && builtins.getEnv "SECRETS_DIR" != "") ''
+    tasks."base:loadCerts" = lib.mkIf (cfg.loadSelfSignedCerts && builtins.getEnv "SECRETS_DIR" != "") {
+      description = "Loads the self signed cert paths into the shell.";
+      exec = ''
         export LOCALHOST_PEM="$SECRETS_DIR/localhost.pem"
         export LOCALHOST_KEY_PEM="$SECRETS_DIR/localhost-key.pem"
-      
-      '' + lib.optionalString (cfg.loadGithubToken && builtins.getEnv "SECRETS_DIR" != "") ''
-        export GH_TOKEN=$(cat $SECRETS_DIR/GH_TOKEN)
-      ''
-      + ''
-        ${cfg.beforeEnterShell}
-        devHelp
-        devInstructions
-        devInfo
-        devPrepare
       '';
+      exports = [ "LOCALHOST_PEM" "LOCALHOST_KEY_PEM" ];
+      showOutput = true;
+      before = [ "devenv:enterShell" ];
+    };
+    tasks."base:loadGithubToken" = lib.mkIf (cfg.loadGithubToken && builtins.getEnv "SECRETS_DIR" != "") {
+      description = "Loads the GH_TOKEN from $SECRETS_DIR into the shell.";
+      exec = ''
+        export GH_TOKEN=$(cat $SECRETS_DIR/GH_TOKEN)
+      '';
+      exports = [ "GH_TOKEN" ];
+      showOutput = true;
+      before = [ "devenv:enterShell" ];
+    };
+    tasks."base:devPrepare" = {
+      description = "Runs the project preparation commands.";
+      exec = ''
+        echo "Preparing Env..."
+        ${cfg.prepare}
+      '';
+      showOutput = true;
+      before = [ "devenv:enterShell" ];
+    };
+    tasks."base:devHelp" = {
+      description = "Lists available scripts.";
+      exec = "devHelp";
+      showOutput = true;
+      after = [ "base:devPrepare" ];
+      before = [ "devenv:enterShell" ];
+    };
+    tasks."base:devInstructions" = {
+      description = "Prints module env variable instructions.";
+      exec = "devInstructions";
+      showOutput = true;
+      after = [ "base:devPrepare" ];
+      before = [ "devenv:enterShell" ];
+    };
+    tasks."base:devInfo" = {
+      description = "Prints environment info.";
+      exec = "devInfo";
+      showOutput = true;
+      after = [ "base:devPrepare" ]
+        ++ lib.optional (cfg.loadSelfSignedCerts && builtins.getEnv "SECRETS_DIR" != "") "base:loadCerts"
+        ++ lib.optional (cfg.loadGithubToken && builtins.getEnv "SECRETS_DIR" != "") "base:loadGithubToken";
+      before = [ "devenv:enterShell" ];
+    };
 
     scripts.devHelp = {
       description = "List available scripts.";
@@ -142,14 +173,6 @@ in
         '';
       };
 
-    # !!! note that scripts cant export config.env vars ???
-    scripts.devPrepare = {
-      description = "Prepares the project for development.";
-      exec = ''
-        echo "Preparing Env..."
-        ${cfg.prepare}
-      '';
-    };
     scripts.devInfo =
       let
         base = ''
@@ -205,9 +228,15 @@ in
               ''\'''\';
               env.SOME_ENV_VAR = cfg.SOME_OPTION;
               # THIS CANNOT USE config.env variables, they will be blank
-              custom.base.beforeEnterShell = ''\'''\'
-                export SOME_OTHER_VAR=$IMPURE_VAR
-              ''\'''\';
+              # export impure env vars into the shell via a task
+              tasks."MODULE_NAME:loadEnv" = {
+                exec = ''\'''\'
+                  export SOME_OTHER_VAR=$IMPURE_VAR
+                ''\'''\';
+                exports = [ "SOME_OTHER_VAR" ];
+                showOutput = true;
+                before = [ "devenv:enterShell" ];
+              };
               # ... devenv options
             };
           }
