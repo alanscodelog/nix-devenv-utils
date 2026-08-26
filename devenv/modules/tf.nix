@@ -22,9 +22,9 @@ in
     '';
     scripts =
       let
-        secretsFound = ''secretspec export --profile terraform --format json | jq -r 'keys | map("\t\(.")") | join("\n")' '';
-        deploySecretsLoader = ''secretspec export --profile terraform --format json | jq -r 'to_entries | map("--var=\"\(.key)=\(.value)\")") | join(" ")"'';
-        deploySecretsLoaderWithBackend = ''secretspec export --profile terraform --format json | jq -r 'to_entries | map(if (.key | startswith("backend_")) then "--backend-config=\"\(.key | ltrimstr("backend_"))=\(.value)\"" else "--var=\"\(.key)=\(.value)\"" end) | join(" ")"'';
+        secretsFound = ''secretspec export --profile terraform --format json | jq -r 'keys[] | "  - \(.)"' '';
+        deploySecretsLoader = ''secretspec export --profile terraform --format json | jq -r 'to_entries[] | select(.key | startswith("backend_") | not) | "-var=\(.key)=\(.value)"' '';
+        deploySecretsLoaderWithBackend = ''secretspec export --profile terraform --format json | jq -r 'to_entries[] | select(.key | startswith("backend_")) | "-backend-config=\(.key | ltrimstr("backend_"))=\(.value)"' '';
       in
       {
         tofuListSecrets =
@@ -38,13 +38,13 @@ in
           };
         tofu = {
           exec = ''
-            ${deploySecretsLoader} | xargs ${pkgs.opentofu}/bin/tofu "$@"
+            ${deploySecretsLoader} | xargs -d '\n' ${pkgs.opentofu}/bin/tofu "$@"
           '';
           description = "Wrapper around tofu that auto loads secrets via secretspec as vars, nested vars are not supported. Anything starting with backend_ is ignored, see tofuWithBackend";
         };
         tofuWithBackend = {
           exec = ''
-            ${deploySecretsLoaderWithBackend} | xargs ${pkgs.opentofu}/bin/tofu "$@"
+            ${deploySecretsLoaderWithBackend} | xargs -d '\n' ${pkgs.opentofu}/bin/tofu "$@"
           '';
           description = "Wrapper around tofu that also loads any keys starting with backend_ as --backend-config=rest_of_key_name=value. This is useful for the tofu init command.";
         };
